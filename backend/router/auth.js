@@ -41,6 +41,29 @@ app.post("/code", (req, res) => {
     }
   );
 });
+app.post("/code/verify", (req, res) => {
+  const schema = Joi.object({
+    phone: Joi.string().min(14).max(14).required(),
+    code: Joi.number().min(100000).max(999999).required(),
+  });
+  const { error, value } = schema.validate(req.body);
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
+  const phone = value.phone;
+  const code = value.code;
+  db.query(
+    "select phone from sms where phone = ? and code = ?",
+    [phone, code],
+    (err, result) => {
+      if (err) throw err;
+      if (result.length <= 0) {
+        return res.status(400).send("Invalid Code");
+      }
+      res.status(200).send("Code Verified");
+    }
+  );
+});
 app.post("/register", (req, res) => {
   const schema = Joi.object({
     phone: Joi.string().min(14).max(14).required(),
