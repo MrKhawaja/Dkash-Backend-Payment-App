@@ -136,7 +136,7 @@ app.post("/login", (req, res) => {
             phone: result[0].phone,
             name: result[0].name,
             email: result[0].email,
-            isAdmin: result[0].is_admin,
+            type: result[0].type,
           },
           jwt_secret
         );

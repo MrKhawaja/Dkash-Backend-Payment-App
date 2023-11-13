@@ -9,8 +9,141 @@ const auth = require("../middleware/auth");
 
 app.post("/send", auth, (req, res) => {
   const phone = req.decoded.phone;
+  const { amount, receiver } = req.body;
+  db.query(
+    "select phone from users where phone = ?",
+    [receiver],
+    (err, result) => {
+      if (err) throw err;
+      if (result.length <= 0) {
+        return res.status(400).send("Receiver not found");
+      }
+      db.query(
+        "select balance from users where phone = ?",
+        [phone],
+        (err, result) => {
+          if (err) throw err;
+          const balance = result[0].balance;
+          if (balance < amount)
+            return res.status(400).send("Insufficient balance");
+          db.query(
+            "update users set balance = balance - ? where phone = ?",
+            [amount, phone],
+            (err, result) => {
+              if (err) throw err;
+              db.query(
+                "update users set balance = balance + ? where phone = ?",
+                [amount, receiver],
+                (err, result) => {
+                  if (err) throw err;
+                  db.query(
+                    "insert into transactions (sender,receiver,amount,type) values (?,?,?,?)",
+                    [phone, receiver, amount, "send_money"],
+                    (err, result) => {
+                      if (err) throw err;
+                      res.send("Money sent successfully");
+                    }
+                  );
+                }
+              );
+            }
+          );
+        }
+      );
+    }
+  );
+});
 
-  db.query("select money from users where phone = ?");
+app.post("/add", auth, (req, res) => {
+  const phone = req.decoded.phone;
+  const type = req.decoded.type;
+  const { amount, receiver } = req.body;
+  if (type != "agent") return res.status(400).send("Only agents can add money");
+  db.query(
+    "select phone from users where phone = ?",
+    [receiver],
+    (err, result) => {
+      if (err) throw err;
+      if (result.length <= 0) return res.status(400).send("Receiver not found");
+      db.query(
+        "select balance from users where phone = ?",
+        [phone],
+        (err, result) => {
+          if (err) throw err;
+          const balance = result[0].balance;
+          if (balance < amount)
+            return res.status(400).send("Insufficient balance");
+          db.query(
+            "update users set balance = balance - ? where phone = ?",
+            [amount, phone],
+            (err, result) => {
+              if (err) throw err;
+              db.query(
+                "update users set balance = balance + ? where phone = ?",
+                [amount, receiver],
+                (err, result) => {
+                  if (err) throw err;
+                  db.query(
+                    "insert into transactions (sender,receiver,amount,type) values (?,?,?,?)",
+                    [phone, receiver, amount, "add_money"],
+                    (err, result) => {
+                      if (err) throw err;
+                      res.send("Money added successfully");
+                    }
+                  );
+                }
+              );
+            }
+          );
+        }
+      );
+    }
+  );
+});
+
+app.post("/cashout", auth, (req, res) => {
+  const phone = req.decoded.phone;
+  const { amount, receiver } = req.body;
+  db.query(
+    "select balance from users where phone = ?",
+    [phone],
+    (err, result) => {
+      if (err) throw err;
+      const balance = result[0].balance;
+      if (balance < amount) return res.status(400).send("Insufficient balance");
+      db.query(
+        "select * from users where phone = ? and type = 'agent'",
+        [receiver],
+        (err, result) => {
+          if (err) throw err;
+          if (result.length <= 0)
+            return res.status(400).send("Agent not found");
+          db.query(
+            "update users set balance = balance - ? where phone = ?",
+            [amount, phone],
+            (err, result) => {
+              if (err) throw err;
+              db.query(
+                "update users set balance = balance + ? where phone = ?",
+                [amount, receiver],
+                (err, result) => {
+                  if (err) throw err;
+                  db.query(
+                    "insert into transactions (sender,receiver,amount,type) values (?,?,?,?)",
+                    [phone, receiver, amount, "cashout"],
+                    (err, result) => {
+                      if (err) throw err;
+                      res.send("Cashout successful");
+                    }
+                  );
+                }
+              );
+            }
+          );
+        }
+      );
+    }
+  );
 });
 
 module.exports = app;

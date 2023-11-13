@@ -29,7 +29,7 @@ db.connect((err) => {
   if (err) throw err;
   console.log("Connected to database");
   db.query(
-    "create table if not exists users (phone varchar(14) not null primary key, name varchar(255) null , picture varchar(255) null, email varchar(255) null, pin varchar(255) not null, is_admin boolean default false, balance double(255,2) default 0.00);",
+    "create table if not exists users (phone varchar(14) not null primary key, name varchar(255) null , picture varchar(255) null, email varchar(255) null, pin varchar(255) not null, type enum('user','agent','merchant') default 'user', balance double(255,2) default 0.00);",
     (err, result) => {
       if (err) throw err;
       console.log("Users Table Initialized");
@@ -40,6 +40,13 @@ db.connect((err) => {
     (err, result) => {
       if (err) throw err;
       console.log("SMS Table Initialized");
+    }
+  );
+  db.query(
+    "create table if not exists transactions (sender varchar(255) not null, receiver varchar(255) not null, amount double(255,2), type enum('send_money','payment','cashout','add_money','loan','recharge'),date datetime default now());",
+    (err, result) => {
+      if (err) throw err;
+      console.log("Transactions Table Initialized");
     }
   );
 });
