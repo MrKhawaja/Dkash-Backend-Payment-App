@@ -3,9 +3,11 @@ const app = express();
 const multer = require("multer");
 var cors = require("cors");
 
-const port = 3001;
+const { port } = require("./config");
 const db = require("./db");
-const auth = require("./router/auth");
+const authentication = require("./router/auth");
+const profile = require("./router/profile");
+const money = require("./router/money");
 
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
@@ -27,7 +29,7 @@ db.connect((err) => {
   if (err) throw err;
   console.log("Connected to database");
   db.query(
-    "create table if not exists users (phone varchar(14) not null primary key, name varchar(255) null , email varchar(255) null, pin varchar(255) not null, is_admin boolean default false, balance double(255,2) default 0.00);",
+    "create table if not exists users (phone varchar(14) not null primary key, name varchar(255) null , picture varchar(255) null, email varchar(255) null, pin varchar(255) not null, is_admin boolean default false, balance double(255,2) default 0.00);",
     (err, result) => {
       if (err) throw err;
       console.log("Users Table Initialized");
@@ -42,7 +44,9 @@ db.connect((err) => {
   );
 });
 
-app.use("/auth", auth);
+app.use("/auth", authentication);
+app.use("/profile", profile);
+app.use("/money", money);
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);

@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express.Router();
-const jwt_secret = "secret";
+const { jwt_secret } = require("../config");
 const Joi = require("joi");
 const db = require("../db");
 const bcrypt = require("bcrypt");
