@@ -2,6 +2,7 @@ const multer = require("multer");
 
 const jwt_secret = "secret";
 const port = 3001;
+const host = "http://localhost:" + port;
 const uploads = multer({
   storage: multer.diskStorage({
     destination: function (req, file, cb) {
@@ -16,4 +17,4 @@ const uploads = multer({
   }),
 });
 
-module.exports = { jwt_secret, port, uploads };
+module.exports = { jwt_secret, port, uploads, host };

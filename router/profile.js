@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express.Router();
 const jwt = require("jsonwebtoken");
-const { jwt_secret, uploads } = require("../config");
+const { jwt_secret, uploads, host } = require("../config");
 const db = require("../db");
 const auth = require("../middleware/auth");
 const Joi = require("joi");
@@ -18,6 +18,7 @@ app.get("/", auth, (req, res) => {
       if (result.length <= 0) {
         return res.status(400).send("Invalid Token");
       }
+      result[0].picture = host + "/uploads/" + result[0].picture;
       return res.status(200).send(result[0]);
     }
   );
