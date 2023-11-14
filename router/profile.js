@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const { jwt_secret, uploads } = require("../config");
 const db = require("../db");
 const auth = require("../middleware/auth");
+const Joi = require("joi");
 
 // Define your routes here
 
@@ -23,8 +24,16 @@ app.get("/", auth, (req, res) => {
 });
 
 app.post("/", (req, res) => {
-  const token = req.headers["token"];
-  const { name, email } = req.body;
+  const schema = Joi.object({
+    name: Joi.string().min(0).max(255).required(),
+    email: Joi.string().min(0).max(255).required().email(),
+  });
+
+  const { error, value } = schema.validate(req.body);
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
+  const { name, email } = value;
   const phone = req.decoded.phone;
   db.query(
     "update users set name = ?, email = ? where phone = ?",

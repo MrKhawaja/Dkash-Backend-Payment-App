@@ -1,15 +1,26 @@
 const express = require("express");
 const app = express.Router();
 const jwt = require("jsonwebtoken");
+const Joi = require("joi");
 const { jwt_secret, uploads } = require("../config");
 const db = require("../db");
 const auth = require("../middleware/auth");
 
 // Define your routes here
 
+const validate = (body) => {
+  const schema = Joi.object({
+    amount: Joi.number().min(1).required(),
+    receiver: Joi.string().min(14).max(14).required(),
+  });
+  return schema.validate(body);
+};
+
 app.post("/send", auth, (req, res) => {
+  const { error, value } = validate(req.body);
+  if (error) return res.status(400).send(error.details[0].message);
+  const { amount, receiver } = value;
   const phone = req.decoded.phone;
-  const { amount, receiver } = req.body;
   db.query(
     "select phone from users where phone = ?",
     [receiver],
@@ -55,9 +66,11 @@ app.post("/send", auth, (req, res) => {
 });
 
 app.post("/add", auth, (req, res) => {
+  const { error, value } = validate(req.body);
+  if (error) return res.status(400).send(error.details[0].message);
+  const { amount, receiver } = value;
   const phone = req.decoded.phone;
   const type = req.decoded.type;
-  const { amount, receiver } = req.body;
   if (type != "agent") return res.status(400).send("Only agents can add money");
   db.query(
     "select phone from users where phone = ?",
@@ -102,8 +115,10 @@ app.post("/add", auth, (req, res) => {
 });
 
 app.post("/cashout", auth, (req, res) => {
+  const { error, value } = validate(req.body);
+  if (error) return res.status(400).send(error.details[0].message);
+  const { amount, receiver } = value;
   const phone = req.decoded.phone;
-  const { amount, receiver } = req.body;
   db.query(
     "select balance from users where phone = ?",
     [phone],
@@ -147,8 +162,10 @@ app.post("/cashout", auth, (req, res) => {
 });
 
 app.post("/pay", auth, (req, res) => {
+  const { error, value } = validate(req.body);
+  if (error) return res.status(400).send(error.details[0].message);
+  const { amount, receiver } = value;
   const phone = req.decoded.phone;
-  const { amount, receiver } = req.body;
   db.query(
     "select balance from users where phone = ?",
     [phone],
