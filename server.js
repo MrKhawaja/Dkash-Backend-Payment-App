@@ -35,13 +35,13 @@ db.connect((err) => {
       console.log("Users Table Initialized");
     }
   );
-  db.query(
-    "create table if not exists sms (phone varchar(14) not null primary key, code int not null);",
-    (err, result) => {
-      if (err) throw err;
-      console.log("SMS Table Initialized");
-    }
-  );
+  // db.query(
+  //   "create table if not exists sms (phone varchar(14) not null primary key, code int not null);",
+  //   (err, result) => {
+  //     if (err) throw err;
+  //     console.log("SMS Table Initialized");
+  //   }
+  // );
   db.query(
     "create table if not exists transactions (sender varchar(255) not null, receiver varchar(255) not null, amount double(255,2), type enum('send_money','payment','cashout','add_money','loan','recharge'),date datetime default now());",
     (err, result) => {

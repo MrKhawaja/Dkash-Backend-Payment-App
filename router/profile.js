@@ -11,14 +11,15 @@ const Joi = require("joi");
 app.get("/", auth, (req, res) => {
   const phone = req.decoded.phone;
   db.query(
-    "select phone,name,picture,email,balance from users where phone = ?",
+    "select phone,name,picture,email,balance,type from users where phone = ?",
     [phone],
     (err, result) => {
       if (err) throw err;
       if (result.length <= 0) {
         return res.status(400).send("Invalid Token");
       }
-      result[0].picture = host + "/uploads/" + result[0].picture;
+      if (result[0].picture)
+        result[0].picture = host + "/uploads/" + result[0].picture;
       return res.status(200).send(result[0]);
     }
   );

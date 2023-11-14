@@ -11,63 +11,62 @@ const jwt = require("jsonwebtoken");
 //   next()
 // })
 // define the home page route
-app.post("/code", (req, res) => {
-  const schema = Joi.object({
-    phone: Joi.string().min(14).max(14).required(),
-  });
-  const { error, value } = schema.validate(req.body);
-  if (error) {
-    return res.status(400).send(error.details[0].message);
-  }
-  const phone = value.phone;
-  db.query(
-    "select phone from users where phone = ?",
-    [phone],
-    (err, result) => {
-      if (err) throw err;
-      if (result.length > 0) {
-        return res.status(400).send("You have already registered.");
-      }
-      const code = Math.floor(100000 + Math.random() * 900000);
-      db.query(
-        "insert into sms (phone,code) values (?,?) on duplicate key update code = ?",
-        [phone, code, code],
-        (err, result) => {
-          if (err) throw err;
-          console.log(code);
-          res.status(200).send("Code Sent");
-        }
-      );
-    }
-  );
-});
-app.post("/code/verify", (req, res) => {
-  const schema = Joi.object({
-    phone: Joi.string().min(14).max(14).required(),
-    code: Joi.number().min(100000).max(999999).required(),
-  });
-  const { error, value } = schema.validate(req.body);
-  if (error) {
-    return res.status(400).send(error.details[0].message);
-  }
-  const phone = value.phone;
-  const code = value.code;
-  db.query(
-    "select phone from sms where phone = ? and code = ?",
-    [phone, code],
-    (err, result) => {
-      if (err) throw err;
-      if (result.length <= 0) {
-        return res.status(400).send("Invalid Code");
-      }
-      res.status(200).send("Code Verified");
-    }
-  );
-});
+// app.post("/code", (req, res) => {
+//   const schema = Joi.object({
+//     phone: Joi.string().min(14).max(14).required(),
+//   });
+//   const { error, value } = schema.validate(req.body);
+//   if (error) {
+//     return res.status(400).send(error.details[0].message);
+//   }
+//   const phone = value.phone;
+//   db.query(
+//     "select phone from users where phone = ?",
+//     [phone],
+//     (err, result) => {
+//       if (err) throw err;
+//       if (result.length > 0) {
+//         return res.status(400).send("You have already registered.");
+//       }
+//       const code = Math.floor(100000 + Math.random() * 900000);
+//       db.query(
+//         "insert into sms (phone,code) values (?,?) on duplicate key update code = ?",
+//         [phone, code, code],
+//         (err, result) => {
+//           if (err) throw err;
+//           console.log(code);
+//           res.status(200).send("Code Sent");
+//         }
+//       );
+//     }
+//   );
+// });
+// app.post("/code/verify", (req, res) => {
+//   const schema = Joi.object({
+//     phone: Joi.string().min(14).max(14).required(),
+//     code: Joi.number().min(100000).max(999999).required(),
+//   });
+//   const { error, value } = schema.validate(req.body);
+//   if (error) {
+//     return res.status(400).send(error.details[0].message);
+//   }
+//   const phone = value.phone;
+//   const code = value.code;
+//   db.query(
+//     "select phone from sms where phone = ? and code = ?",
+//     [phone, code],
+//     (err, result) => {
+//       if (err) throw err;
+//       if (result.length <= 0) {
+//         return res.status(400).send("Invalid Code");
+//       }
+//       res.status(200).send("Code Verified");
+//     }
+//   );
+// });
 app.post("/register", (req, res) => {
   const schema = Joi.object({
     phone: Joi.string().min(14).max(14).required(),
-    code: Joi.number().min(100000).max(999999).required(),
     pin: Joi.number().min(100000).max(999999).required(),
   });
   const { error, value } = schema.validate(req.body);
@@ -75,41 +74,26 @@ app.post("/register", (req, res) => {
     return res.status(400).send(error.details[0].message);
   }
   const phone = value.phone;
-  const code = value.code;
   const pin = value.pin.toString();
-  db.query(
-    "select phone from sms where phone = ? and code = ?",
-    [phone, code],
-    (err, result) => {
-      if (err) throw err;
-      if (result.length <= 0) {
-        return res.status(400).send("Invalid Code");
-      }
-      bcrypt.hash(pin, 10, (err, hash) => {
+  bcrypt.hash(pin, 10, (err, hash) => {
+    if (err) throw err;
+    db.query(
+      "insert into users (phone,pin) values (?,?)",
+      [phone, hash],
+      (err, result) => {
         if (err) throw err;
-        db.query(
-          "insert into users (phone,pin) values (?,?)",
-          [phone, hash],
-          (err, result) => {
-            if (err) throw err;
-            const token = jwt.sign(
-              {
-                phone,
-                isAdmin: false,
-              },
-              jwt_secret
-            );
-            db.query("delete from sms where phone = ?", [phone], (err) => {
-              if (err) throw err;
-              res.status(200).send(token);
-            });
-          }
+        const token = jwt.sign(
+          {
+            phone,
+            type: "user",
+          },
+          jwt_secret
         );
-      });
-    }
-  );
+        res.status(200).send(token);
+      }
+    );
+  });
 });
-
 app.post("/login", (req, res) => {
   const schema = Joi.object({
     phone: Joi.string().min(14).max(14).required(),
