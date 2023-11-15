@@ -5,6 +5,9 @@ const Joi = require("joi");
 const db = require("../db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+
+app.use(express.json());
+
 // middleware that is specific to this router
 // router.use((req, res, next) => {
 //   console.log('Time: ', Date.now())
@@ -75,24 +78,34 @@ app.post("/register", (req, res) => {
   }
   const phone = value.phone;
   const pin = value.pin.toString();
-  bcrypt.hash(pin, 10, (err, hash) => {
-    if (err) throw err;
-    db.query(
-      "insert into users (phone,pin) values (?,?)",
-      [phone, hash],
-      (err, result) => {
-        if (err) throw err;
-        const token = jwt.sign(
-          {
-            phone,
-            type: "user",
-          },
-          jwt_secret
-        );
-        res.status(200).send(token);
+  db.query(
+    "select phone from users where phone = ?",
+    [phone],
+    (err, result) => {
+      if (err) throw err;
+      if (result.length > 0) {
+        return res.status(400).send("You have already registered.");
       }
-    );
-  });
+      bcrypt.hash(pin, 10, (err, hash) => {
+        if (err) throw err;
+        db.query(
+          "insert into users (phone,pin) values (?,?)",
+          [phone, hash],
+          (err, result) => {
+            if (err) throw err;
+            const token = jwt.sign(
+              {
+                phone,
+                type: "user",
+              },
+              jwt_secret
+            );
+            res.status(200).send(token);
+          }
+        );
+      });
+    }
+  );
 });
 app.post("/login", (req, res) => {
   const schema = Joi.object({

@@ -10,18 +10,7 @@ const profile = require("./router/profile");
 const money = require("./router/money");
 
 app.use(cors());
-app.use(express.urlencoded({ extended: true }));
-
-const uploads = multer({
-  storage: multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, "./uploads");
-    },
-    filename: function (req, file, cb) {
-      cb(null, file.fieldname + "-" + Date.now() + ".pdf");
-    },
-  }),
-});
+// app.use(express.urlencoded({ extended: true }));
 
 app.use("/uploads", express.static(__dirname + "/uploads"));
 
