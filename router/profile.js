@@ -8,6 +8,8 @@ const Joi = require("joi");
 
 // Define your routes here
 
+app.use(express.json());
+
 app.get("/", auth, (req, res) => {
   const phone = req.decoded.phone;
   db.query(
@@ -46,6 +48,8 @@ app.post("/", (req, res) => {
     }
   );
 });
+
+app.use(express.urlencoded({ extended: true }));
 
 app.post("/picture", auth, uploads.single("image"), (req, res) => {
   const phone = req.decoded.phone;
