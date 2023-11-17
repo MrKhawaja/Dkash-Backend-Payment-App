@@ -27,7 +27,7 @@ app.get("/", auth, (req, res) => {
   );
 });
 
-app.post("/", (req, res) => {
+app.post("/", auth, (req, res) => {
   const schema = Joi.object({
     name: Joi.string().min(0).max(255).required(),
     email: Joi.string().min(0).max(255).required().email(),
