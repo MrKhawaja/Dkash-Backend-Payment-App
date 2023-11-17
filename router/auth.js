@@ -132,6 +132,8 @@ app.post("/login", (req, res) => {
           {
             phone: result[0].phone,
             name: result[0].name,
+            picture: result[0].picture,
+            balance: result[0].balance,
             email: result[0].email,
             type: result[0].type,
           },
