@@ -8,6 +8,7 @@ const db = require("./db");
 const authentication = require("./router/auth");
 const profile = require("./router/profile");
 const money = require("./router/money");
+const contacts = require("./router/contacts");
 
 app.use(cors());
 // app.use(express.urlencoded({ extended: true }));
@@ -32,6 +33,14 @@ db.connect((err) => {
   //   }
   // );
   db.query(
+    "create table if not exists contacts (id bigint auto_increment primary key, phone varchar(14) not null, contact_phone varchar(14) not null, contact_name varchar(255) null, foreign key (phone) references users(phone));",
+    (err, result) => {
+      if (err) throw err;
+      console.log("Contacts Table Initialized");
+    }
+  );
+
+  db.query(
     "create table if not exists transactions (sender varchar(255) not null, receiver varchar(255) not null, amount double(255,2), type enum('send_money','payment','cashout','add_money','loan','recharge'),date datetime default now());",
     (err, result) => {
       if (err) throw err;
@@ -43,6 +52,7 @@ db.connect((err) => {
 app.use("/auth", authentication);
 app.use("/profile", profile);
 app.use("/money", money);
+app.use("/contacts", contacts);
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
