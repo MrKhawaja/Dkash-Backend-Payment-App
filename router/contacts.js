@@ -39,6 +39,26 @@ app.post("/", auth, (req, res) => {
   );
 });
 
+app.put("/:id", auth, (req, res) => {
+  const phone = req.decoded.phone;
+  const id = req.params.id;
+  const { contactPhone, contactName } = req.body;
+  const schema = Joi.object({
+    contactPhone: Joi.string().min(14).max(14).required(),
+    contactName: Joi.string().min(1).max(255).required(),
+  });
+  const { error } = schema.validate(req.body);
+  if (error) return res.status(400).send(error.details[0].message);
+  db.query(
+    "UPDATE contacts SET contact_phone = ?, contact_name = ? WHERE id = ? AND phone = ?",
+    [contactPhone, contactName, id, phone],
+    (err, results) => {
+      if (err) throw err;
+      res.status(200).send("Successfully Updated");
+    }
+  );
+});
+
 app.delete("/:id", auth, (req, res) => {
   const phone = req.decoded.phone;
   const id = req.params.id;
