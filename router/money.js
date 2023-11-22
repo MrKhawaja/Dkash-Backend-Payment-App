@@ -123,28 +123,47 @@ app.post("/add", auth, (req, res) => {
           const balance = result[0].balance;
           if (balance < amount)
             return res.status(400).send("Insufficient balance");
-          db.query(
-            "update users set balance = balance - ? where phone = ?",
-            [amount, phone],
-            (err, result) => {
-              if (err) throw err;
-              db.query(
-                "update users set balance = balance + ? where phone = ?",
-                [amount, receiver],
-                (err, result) => {
-                  if (err) throw err;
-                  db.query(
-                    "insert into transactions (sender,receiver,amount,type) values (?,?,?,?)",
-                    [phone, receiver, amount, "add_money"],
-                    (err, result) => {
-                      if (err) throw err;
-                      res.send("Money added successfully");
+          db.beginTransaction((err) => {
+            if (err) throw err;
+
+            db.query(
+              "update users set balance = balance - ? where phone = ?",
+              [amount, phone],
+              (err, result) => {
+                if (err) throw err;
+                db.query(
+                  "update users set balance = balance + ? where phone = ?",
+                  [amount, receiver],
+                  (err, result) => {
+                    if (err) {
+                      return db.rollback(() => {
+                        throw err;
+                      });
                     }
-                  );
-                }
-              );
-            }
-          );
+                    db.query(
+                      "insert into transactions (sender,receiver,amount,type) values (?,?,?,?)",
+                      [phone, receiver, amount, "add_money"],
+                      (err, result) => {
+                        if (err) {
+                          return db.rollback(() => {
+                            throw err;
+                          });
+                        }
+                        db.commit((err) => {
+                          if (err) {
+                            return db.rollback(() => {
+                              throw err;
+                            });
+                          }
+                          res.status(200).send("Money added successfully");
+                        });
+                      }
+                    );
+                  }
+                );
+              }
+            );
+          });
         }
       );
     }
@@ -156,13 +175,15 @@ app.post("/cashout", auth, (req, res) => {
   if (error) return res.status(400).send(error.details[0].message);
   const { amount, receiver } = value;
   const phone = req.decoded.phone;
+  const fees = 0.02 * amount;
   db.query(
     "select balance from users where phone = ?",
     [phone],
     (err, result) => {
       if (err) throw err;
       const balance = result[0].balance;
-      if (balance < amount) return res.status(400).send("Insufficient balance");
+      if (balance < amount + fees)
+        return res.status(400).send("Insufficient balance");
       db.query(
         "select * from users where phone = ? and type = 'agent'",
         [receiver],
@@ -170,28 +191,47 @@ app.post("/cashout", auth, (req, res) => {
           if (err) throw err;
           if (result.length <= 0)
             return res.status(400).send("Agent not found");
-          db.query(
-            "update users set balance = balance - ? where phone = ?",
-            [amount, phone],
-            (err, result) => {
-              if (err) throw err;
-              db.query(
-                "update users set balance = balance + ? where phone = ?",
-                [amount, receiver],
-                (err, result) => {
-                  if (err) throw err;
-                  db.query(
-                    "insert into transactions (sender,receiver,amount,type) values (?,?,?,?)",
-                    [phone, receiver, amount, "cashout"],
-                    (err, result) => {
-                      if (err) throw err;
-                      res.send("Cashout successful");
+          db.beginTransaction((err) => {
+            if (err) throw err;
+
+            db.query(
+              "update users set balance = balance - ? where phone = ?",
+              [amount + fees, phone],
+              (err, result) => {
+                if (err) throw err;
+                db.query(
+                  "update users set balance = balance + ? where phone = ?",
+                  [amount + fees / 2, receiver],
+                  (err, result) => {
+                    if (err) {
+                      return db.rollback(() => {
+                        throw err;
+                      });
                     }
-                  );
-                }
-              );
-            }
-          );
+                    db.query(
+                      "insert into transactions (sender,receiver,amount,type) values (?,?,?,?)",
+                      [phone, receiver, amount, "cashout"],
+                      (err, result) => {
+                        if (err) {
+                          return db.rollback(() => {
+                            throw err;
+                          });
+                        }
+                        db.commit((err) => {
+                          if (err) {
+                            return db.rollback(() => {
+                              throw err;
+                            });
+                          }
+                          res.status(200).send("Cashout successful");
+                        });
+                      }
+                    );
+                  }
+                );
+              }
+            );
+          });
         }
       );
     }
@@ -203,6 +243,7 @@ app.post("/pay", auth, (req, res) => {
   if (error) return res.status(400).send(error.details[0].message);
   const { amount, receiver } = value;
   const phone = req.decoded.phone;
+  var fees = 5 + 0.001 * amount;
   db.query(
     "select balance from users where phone = ?",
     [phone],
@@ -217,28 +258,46 @@ app.post("/pay", auth, (req, res) => {
           if (err) throw err;
           if (result.length <= 0)
             return res.status(400).send("Merchant not found");
-          db.query(
-            "update users set balance = balance - ? where phone = ?",
-            [amount, phone],
-            (err, result) => {
-              if (err) throw err;
-              db.query(
-                "update users set balance = balance + ? where phone = ?",
-                [amount, receiver],
-                (err, result) => {
-                  if (err) throw err;
-                  db.query(
-                    "insert into transactions (sender,receiver,amount,type) values (?,?,?,?)",
-                    [phone, receiver, amount, "pay"],
-                    (err, result) => {
-                      if (err) throw err;
-                      res.send("Payment successful");
+          db.beginTransaction((err) => {
+            if (err) throw err;
+            db.query(
+              "update users set balance = balance - ? where phone = ?",
+              [amount, phone],
+              (err, result) => {
+                if (err) throw err;
+                db.query(
+                  "update users set balance = balance + ? where phone = ?",
+                  [amount - fees, receiver],
+                  (err, result) => {
+                    if (err) {
+                      return db.rollback(() => {
+                        throw err;
+                      });
                     }
-                  );
-                }
-              );
-            }
-          );
+                    db.query(
+                      "insert into transactions (sender,receiver,amount,type) values (?,?,?,?)",
+                      [phone, receiver, amount, "pay"],
+                      (err, result) => {
+                        if (err) {
+                          return db.rollback(() => {
+                            throw err;
+                          });
+                        }
+                        db.commit((err) => {
+                          if (err) {
+                            return db.rollback(() => {
+                              throw err;
+                            });
+                          }
+                          res.status(200).send("Payment successful");
+                        });
+                      }
+                    );
+                  }
+                );
+              }
+            );
+          });
         }
       );
     }
