@@ -52,4 +52,46 @@ app.delete("/:id", auth, (req, res) => {
   );
 });
 
+app.get("/fav", auth, (req, res) => {
+  const phone = req.decoded.phone;
+  db.query(
+    "SELECT id, contact_phone, contact_name FROM contacts WHERE phone = ? AND is_fav = 1",
+    phone,
+    (err, results) => {
+      if (err) throw err;
+      res.status(200).send(results);
+    }
+  );
+});
+
+app.post("/fav", auth, (req, res) => {
+  const phone = req.decoded.phone;
+  const { contactPhone, contactName } = req.body;
+  const schema = Joi.object({
+    contactPhone: Joi.string().min(14).max(14).required(),
+    contactName: Joi.string().min(1).max(255),
+  });
+  const { error } = schema.validate(req.body);
+  if (error) return res.status(400).send(error.details[0].message);
+  if (contactName) {
+    db.query(
+      "INSERT INTO contacts (phone, contact_phone, contact_name, is_fav) VALUES (?, ?, ?, 1)",
+      [phone, contactPhone, contactName],
+      (err, results) => {
+        if (err) throw err;
+        res.status(201).send("Successfully Added");
+      }
+    );
+  } else {
+    db.query(
+      "UPDATE contacts SET is_fav = 1 WHERE phone = ? AND contact_phone = ?",
+      [phone, contactPhone],
+      (err, results) => {
+        if (err) throw err;
+        res.status(201).send("Successfully Added");
+      }
+    );
+  }
+});
+
 module.exports = app;
