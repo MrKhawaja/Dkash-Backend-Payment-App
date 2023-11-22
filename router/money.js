@@ -23,48 +23,83 @@ app.post("/send", auth, (req, res) => {
   if (error) return res.status(400).send(error.details[0].message);
   const { amount, receiver } = value;
   const phone = req.decoded.phone;
-  db.query(
-    "select phone from users where phone = ?",
-    [receiver],
-    (err, result) => {
-      if (err) throw err;
-      if (result.length <= 0) {
-        return res.status(400).send("Receiver not found");
-      }
-      db.query(
-        "select balance from users where phone = ?",
-        [phone],
-        (err, result) => {
-          if (err) throw err;
-          const balance = result[0].balance;
-          if (balance < amount)
-            return res.status(400).send("Insufficient balance");
-          db.query(
-            "update users set balance = balance - ? where phone = ?",
-            [amount, phone],
-            (err, result) => {
-              if (err) throw err;
-              db.query(
-                "update users set balance = balance + ? where phone = ?",
-                [amount, receiver],
-                (err, result) => {
-                  if (err) throw err;
-                  db.query(
-                    "insert into transactions (sender,receiver,amount,type) values (?,?,?,?)",
-                    [phone, receiver, amount, "send_money"],
-                    (err, result) => {
-                      if (err) throw err;
-                      res.send("Money sent successfully");
-                    }
-                  );
-                }
-              );
-            }
-          );
+  var fees = 5 + 0.001 * amount;
+
+  db.beginTransaction((err) => {
+    if (err) throw err;
+
+    db.query(
+      "select phone from users where phone = ?",
+      [receiver],
+      (err, result) => {
+        if (err) throw err;
+        if (result.length <= 0) {
+          return res.status(400).send("Receiver not found");
         }
-      );
-    }
-  );
+        db.query(
+          "select is_fav from contacts where phone = ? and contact_phone = ?",
+          [phone, receiver],
+          (err, result) => {
+            if (err) throw err;
+            if (result.length > 0) {
+              const is_fav = result[0].is_fav;
+              if (is_fav) {
+                fees = 0;
+              }
+            }
+            db.query(
+              "select balance from users where phone = ?",
+              [phone],
+              (err, result) => {
+                if (err) throw err;
+                const balance = result[0].balance;
+                if (balance < amount + fees)
+                  return res.status(400).send("Insufficient balance");
+
+                db.query(
+                  "update users set balance = balance - ? where phone = ?",
+                  [amount + fees, phone],
+                  (err, result) => {
+                    if (err) throw err;
+                    db.query(
+                      "update users set balance = balance + ? where phone = ?",
+                      [amount, receiver],
+                      (err, result) => {
+                        if (err) {
+                          return db.rollback(() => {
+                            throw err;
+                          });
+                        }
+                        db.query(
+                          "insert into transactions (sender,receiver,amount,type) values (?,?,?,?)",
+                          [phone, receiver, amount, "send_money"],
+                          (err, result) => {
+                            if (err) {
+                              return db.rollback(() => {
+                                throw err;
+                              });
+                            }
+                            db.commit((err) => {
+                              if (err) {
+                                return db.rollback(() => {
+                                  throw err;
+                                });
+                              }
+                              res.send("Money sent successfully");
+                            });
+                          }
+                        );
+                      }
+                    );
+                  }
+                );
+              }
+            );
+          }
+        );
+      }
+    );
+  });
 });
 
 app.post("/add", auth, (req, res) => {

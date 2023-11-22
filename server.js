@@ -33,7 +33,7 @@ db.connect((err) => {
   //   }
   // );
   db.query(
-    "create table if not exists contacts (id bigint auto_increment primary key, phone varchar(14) not null, contact_phone varchar(14) not null, contact_name varchar(255) null, foreign key (phone) references users(phone));",
+    "create table if not exists contacts (id bigint auto_increment primary key, phone varchar(14) not null, contact_phone varchar(14) not null, contact_name varchar(255) null,is_fav boolean default false,  foreign key (phone) references users(phone));",
     (err, result) => {
       if (err) throw err;
       console.log("Contacts Table Initialized");
