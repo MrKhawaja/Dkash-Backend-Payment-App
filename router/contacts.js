@@ -6,7 +6,7 @@ const { jwt_secret, uploads } = require("../config");
 const db = require("../db");
 const auth = require("../middleware/auth");
 
-// Define your routes here
+// Define your routes here e
 app.use(express.json());
 app.get("/", auth, (req, res) => {
   const phone = req.decoded.phone;
