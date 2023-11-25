@@ -15,7 +15,7 @@ app.get("/", auth, (req, res) => {
     phone,
     (err, results) => {
       if (err) throw err;
-      res.status(200).send(results);
+      res.status(200).send(JSON.stringify(results));
     }
   );
 });
