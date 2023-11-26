@@ -6,8 +6,6 @@ const { jwt_secret, uploads } = require("../config");
 const db = require("../db");
 const auth = require("../middleware/auth");
 
-// Define your routes here
-
 const validate = (body) => {
   const schema = Joi.object({
     amount: Joi.number().min(1).required(),
