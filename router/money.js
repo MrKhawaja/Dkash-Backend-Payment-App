@@ -396,6 +396,41 @@ app.post("/loan/pay", auth, (req, res) => {
   });
 });
 
+app.post("/recharge", auth, (req, res) => {
+  const schema = Joi.object({
+    amount: Joi.number().min(1).required(),
+    receiver: Joi.string().min(14).max(14).required(),
+  });
+
+  const { error, value } = schema.validate(req.body);
+  if (error) return res.status(400).send(error.details[0].message);
+  const { amount, receiver } = value;
+  const phone = req.decoded.phone;
+  const type = req.decoded.type;
+  if (type == "merchant")
+    return res.status(400).send("Merchants cannot recharge");
+  db.query("select * from users where phone = ?", [phone], (err, result) => {
+    if (err) throw err;
+    if (result.length <= 0) return res.status(400).send("User not found");
+
+    db.query(
+      "update users set balance = balance - ? where phone = ?",
+      [amount, phone],
+      (err, result) => {
+        if (err) throw err;
+        console.log(`Recharged ${amount}tk to ${receiver}`);
+        db.query(
+          "insert into transactions (sender,receiver,amount,type) values (?,?,?,?)",
+          [phone, receiver, amount, "recharge"],
+          (err, result) => {
+            if (err) throw err;
+            res.status(200).send("Recharge successful");
+          }
+        );
+      }
+    );
+  });
+});
 app.get("/transactions", auth, (req, res) => {
   const phone = req.decoded.phone;
   db.query(

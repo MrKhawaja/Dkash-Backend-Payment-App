@@ -57,7 +57,7 @@ db.connect((err) => {
   // );
 
   db.query(
-    "create table if not exists transactions (sender varchar(255) not null, receiver varchar(255) not null, amount double(255,2), type enum('send_money','payment','cashout','add_money','loan','recharge','loan_repay'),date datetime default now(), foreign key (sender) references users(phone), foreign key (receiver) references users(phone));",
+    "create table if not exists transactions (sender varchar(255) not null, receiver varchar(255) not null, amount double(255,2), type enum('send_money','payment','cashout','add_money','loan','recharge','loan_repay'),date datetime default now(), foreign key (sender) references users(phone));",
     (err, result) => {
       if (err) throw err;
       console.log("Transactions Table Initialized");
