@@ -1,8 +1,9 @@
 const multer = require("multer");
 
-const jwt_secret = "secret";
-const port = 3001;
-const host = "http://localhost:" + port;
+const jwt_secret = process.env.JWT_SECRET;
+const port = process.env.PORT;
+const domain = process.env.DOMAIN;
+const host = "http://" + domain + ":" + port;
 const uploads = multer({
   storage: multer.diskStorage({
     destination: function (req, file, cb) {
