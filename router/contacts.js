@@ -20,11 +20,31 @@ app.get("/", auth, (req, res) => {
   );
 });
 
-app.use(express.urlencoded({ extended: true }));
+// app.use(express.urlencoded({ extended: true }));
 
-app.post("/", auth, uploads.single("picture"), (req, res) => {
+// app.post("/", auth, uploads.single("picture"), (req, res) => {
+//   const phone = req.decoded.phone;
+//   const picture = req.file.filename;
+//   const { contactPhone, contactName } = req.body;
+//   const schema = Joi.object({
+//     contactPhone: Joi.string().min(14).max(14).required(),
+//     contactName: Joi.string().min(1).max(255).required(),
+//   });
+//   const { error } = schema.validate(req.body);
+//   if (error) return res.status(400).send(error.details[0].message);
+//   db.query(
+//     "INSERT INTO contacts (phone, contact_phone, contact_name, contact_picture) VALUES (?, ?, ?,?)",
+//     [phone, contactPhone, contactName, picture],
+//     (err, results) => {
+//       if (err) throw err;
+//       res.status(201).send("Successfully Added");
+//     }
+//   );
+// });
+
+app.post("/", auth, (req, res) => {
   const phone = req.decoded.phone;
-  const picture = req.file.filename;
+  // const picture = req.file.filename;
   const { contactPhone, contactName } = req.body;
   const schema = Joi.object({
     contactPhone: Joi.string().min(14).max(14).required(),
@@ -33,14 +53,15 @@ app.post("/", auth, uploads.single("picture"), (req, res) => {
   const { error } = schema.validate(req.body);
   if (error) return res.status(400).send(error.details[0].message);
   db.query(
-    "INSERT INTO contacts (phone, contact_phone, contact_name, contact_picture) VALUES (?, ?, ?,?)",
-    [phone, contactPhone, contactName, picture],
+    "INSERT INTO contacts (phone, contact_phone, contact_name) VALUES (?, ?, ?)",
+    [phone, contactPhone, contactName],
     (err, results) => {
       if (err) throw err;
       res.status(201).send("Successfully Added");
     }
   );
 });
+
 app.use(express.json());
 
 app.put("/:id", auth, (req, res) => {
@@ -101,11 +122,29 @@ app.put("/fav/:id", auth, (req, res) => {
   );
 });
 
-app.use(express.urlencoded({ extended: true }));
+// app.use(express.urlencoded({ extended: true }));
 
-app.post("/fav", auth, uploads.single("picture"), (req, res) => {
+// app.post("/fav", auth, uploads.single("picture"), (req, res) => {
+//   const phone = req.decoded.phone;
+//   const picture = req.file.filename;
+//   const { contactPhone, contactName } = req.body;
+//   const schema = Joi.object({
+//     contactPhone: Joi.string().min(14).max(14).required(),
+//     contactName: Joi.string().min(1).max(255),
+//   });
+//   const { error } = schema.validate(req.body);
+//   if (error) return res.status(400).send(error.details[0].message);
+//   db.query(
+//     "INSERT INTO contacts (phone, contact_phone, contact_name,contact_picture, is_fav) VALUES (?, ?, ?,?, 1)",
+//     [phone, contactPhone, contactName, picture],
+//     (err, results) => {
+//       if (err) throw err;
+//       res.status(201).send("Successfully Added");
+//     }
+//   );
+// });
+app.post("/fav", auth, (req, res) => {
   const phone = req.decoded.phone;
-  const picture = req.file.filename;
   const { contactPhone, contactName } = req.body;
   const schema = Joi.object({
     contactPhone: Joi.string().min(14).max(14).required(),
@@ -114,8 +153,8 @@ app.post("/fav", auth, uploads.single("picture"), (req, res) => {
   const { error } = schema.validate(req.body);
   if (error) return res.status(400).send(error.details[0].message);
   db.query(
-    "INSERT INTO contacts (phone, contact_phone, contact_name,contact_picture, is_fav) VALUES (?, ?, ?,?, 1)",
-    [phone, contactPhone, contactName, picture],
+    "INSERT INTO contacts (phone, contact_phone, contact_name, is_fav) VALUES (?, ?, ?, 1)",
+    [phone, contactPhone, contactName],
     (err, results) => {
       if (err) throw err;
       res.status(201).send("Successfully Added");
