@@ -24,6 +24,7 @@ app.get("/", auth, (req, res) => {
 app.post("/", auth, (req, res) => {
   const schema = Joi.object({
     subject: Joi.string().required(),
+    message: Joi.string().required(),
   });
   const { error } = schema.validate(req.body);
   if (error) return res.status(400).send(error.details[0].message);
@@ -33,7 +34,15 @@ app.post("/", auth, (req, res) => {
     [req.decoded.phone, subject],
     (err, result) => {
       if (err) throw err;
-      res.status(200).send("Chat Created");
+      db.query(
+        "insert into messages (chat_id,message,sender) values (?,?,?)",
+        [result.insertId, req.body.message, req.decoded.phone],
+        (err, result) => {
+          if (err) throw err;
+
+          res.status(200).send("Chat Created");
+        }
+      );
     }
   );
 });
