@@ -11,7 +11,7 @@ app.use(express.json());
 app.get("/", auth, (req, res) => {
   const phone = req.decoded.phone;
   db.query(
-    "SELECT id, contact_phone, contact_name FROM contacts WHERE phone = ?",
+    "SELECT id, contact_phone, contact_name,is_fav FROM contacts WHERE phone = ?",
     phone,
     (err, results) => {
       if (err) throw err;
