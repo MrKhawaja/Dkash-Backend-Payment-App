@@ -375,6 +375,8 @@ app.post("/loan/pay", auth, (req, res) => {
     if (result.length <= 0) return res.status(400).send("User not found");
     if (result[0].loan <= 0)
       return res.status(400).send("You have no outstanding loan");
+    if (result[0].balance < amount)
+      return res.status(400).send("Insufficient balance");
     const loan = pendingLoan(result[0].loan, result[0].loan_taken);
     if (amount > loan)
       return res.status(400).send("Amount is greater than loan");

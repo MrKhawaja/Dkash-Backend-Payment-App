@@ -64,4 +64,21 @@ app.post("/picture", auth, uploads.single("image"), (req, res) => {
   );
 });
 
+app.get("/image/:phone", (req, res) => {
+  const phone = req.params.phone;
+  db.query(
+    "select picture from users where phone = ?",
+    [phone],
+    (err, result) => {
+      if (err) throw err;
+      if (result.length <= 0) {
+        return res.status(400).send("Invalid Token");
+      }
+      if (result[0].picture)
+        result[0].picture = host + "/uploads/" + result[0].picture;
+      return res.status(200).send(result[0]);
+    }
+  );
+});
+
 module.exports = app;
