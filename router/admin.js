@@ -56,4 +56,24 @@ app.post("/chat/message", auth, (req, res) => {
   );
 });
 
+app.get("/users", auth, (req, res) => {
+  if (req.decoded.type != "admin") {
+    return res.status(401).send("Unauthorized");
+  }
+  db.query("select * from users", (err, result) => {
+    if (err) throw err;
+    res.status(200).send(result);
+  });
+});
+
+app.get("/transactions", auth, (req, res) => {
+  if (req.decoded.type != "admin") {
+    return res.status(401).send("Unauthorized");
+  }
+  db.query("select * from transactions", (err, result) => {
+    if (err) throw err;
+    res.status(200).send(result);
+  });
+});
+
 module.exports = app;
