@@ -36,7 +36,11 @@ app.post("/register", (req, res) => {
             if (err) throw err;
             const token = jwt.sign(
               {
-                phone,
+                phone: phone,
+                name: null,
+                picture: null,
+                balance: 0,
+                email: null,
                 type: "user",
               },
               jwt_secret

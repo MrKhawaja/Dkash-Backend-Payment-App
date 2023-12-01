@@ -20,8 +20,11 @@ app.get("/", auth, (req, res) => {
   );
 });
 
-app.post("/", auth, (req, res) => {
+app.use(express.urlencoded({ extended: true }));
+
+app.post("/", auth, uploads.single("picture"), (req, res) => {
   const phone = req.decoded.phone;
+  const picture = req.file.filename;
   const { contactPhone, contactName } = req.body;
   const schema = Joi.object({
     contactPhone: Joi.string().min(14).max(14).required(),
@@ -30,14 +33,15 @@ app.post("/", auth, (req, res) => {
   const { error } = schema.validate(req.body);
   if (error) return res.status(400).send(error.details[0].message);
   db.query(
-    "INSERT INTO contacts (phone, contact_phone, contact_name) VALUES (?, ?, ?)",
-    [phone, contactPhone, contactName],
+    "INSERT INTO contacts (phone, contact_phone, contact_name, contact_picture) VALUES (?, ?, ?,?)",
+    [phone, contactPhone, contactName, picture],
     (err, results) => {
       if (err) throw err;
       res.status(201).send("Successfully Added");
     }
   );
 });
+app.use(express.json());
 
 app.put("/:id", auth, (req, res) => {
   const phone = req.decoded.phone;
@@ -75,7 +79,7 @@ app.delete("/:id", auth, (req, res) => {
 app.get("/fav", auth, (req, res) => {
   const phone = req.decoded.phone;
   db.query(
-    "SELECT id, contact_phone, contact_name FROM contacts WHERE phone = ? AND is_fav = 1",
+    "SELECT id, contact_phone, contact_name, contact_picture FROM contacts WHERE phone = ? AND is_fav = 1",
     phone,
     (err, results) => {
       if (err) throw err;
@@ -84,8 +88,24 @@ app.get("/fav", auth, (req, res) => {
   );
 });
 
-app.post("/fav", auth, (req, res) => {
+app.put("/fav/:id", auth, (req, res) => {
   const phone = req.decoded.phone;
+  const id = req.params.id;
+  db.query(
+    "UPDATE contacts SET is_fav = 1 WHERE phone = ? AND id = ?",
+    [phone, id],
+    (err, results) => {
+      if (err) throw err;
+      res.status(201).send("Successfully Added");
+    }
+  );
+});
+
+app.use(express.urlencoded({ extended: true }));
+
+app.post("/fav", auth, uploads.single("picture"), (req, res) => {
+  const phone = req.decoded.phone;
+  const picture = req.file.filename;
   const { contactPhone, contactName } = req.body;
   const schema = Joi.object({
     contactPhone: Joi.string().min(14).max(14).required(),
@@ -93,25 +113,14 @@ app.post("/fav", auth, (req, res) => {
   });
   const { error } = schema.validate(req.body);
   if (error) return res.status(400).send(error.details[0].message);
-  if (contactName) {
-    db.query(
-      "INSERT INTO contacts (phone, contact_phone, contact_name, is_fav) VALUES (?, ?, ?, 1)",
-      [phone, contactPhone, contactName],
-      (err, results) => {
-        if (err) throw err;
-        res.status(201).send("Successfully Added");
-      }
-    );
-  } else {
-    db.query(
-      "UPDATE contacts SET is_fav = 1 WHERE phone = ? AND contact_phone = ?",
-      [phone, contactPhone],
-      (err, results) => {
-        if (err) throw err;
-        res.status(201).send("Successfully Added");
-      }
-    );
-  }
+  db.query(
+    "INSERT INTO contacts (phone, contact_phone, contact_name,contact_picture, is_fav) VALUES (?, ?, ?,?, 1)",
+    [phone, contactPhone, contactName, picture],
+    (err, results) => {
+      if (err) throw err;
+      res.status(201).send("Successfully Added");
+    }
+  );
 });
 
 module.exports = app;
