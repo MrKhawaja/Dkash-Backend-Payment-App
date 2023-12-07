@@ -60,7 +60,7 @@ app.post("/login", (req, res) => {
   const { error, value } = schema.validate(req.body);
 
   if (error) {
-    return res.status(400).send(error.details[0].message);
+    return res.status(401).send(error.details[0].message);
   }
   const phone = value.phone;
   const pin = value.pin.toString();
@@ -68,7 +68,7 @@ app.post("/login", (req, res) => {
   db.query("select * from users where phone = ?", [phone], (err, result) => {
     if (err) throw err;
     if (result.length === 0) {
-      return res.status(400).send("User not found");
+      return res.status(401).send("User not found");
     }
     bcrypt.compare(pin, result[0].pin, (err, response) => {
       if (err) throw err;
@@ -86,7 +86,7 @@ app.post("/login", (req, res) => {
         );
         return res.status(200).send(token);
       } else {
-        return res.status(400).send("Wrong Pin");
+        return res.status(401).send("Wrong Pin");
       }
     });
   });
