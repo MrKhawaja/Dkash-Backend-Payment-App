@@ -127,11 +127,14 @@ app.get("/isfav/:phone", auth, (req, res) => {
   const contactPhone = req.params.phone;
 
   db.query(
-    "SELECT is_fav FROM contacts WHERE phone = ? AND contact_phone = ?",
+    "SELECT contact_phone as receiver, is_fav FROM contacts WHERE phone = ? AND contact_phone = ?",
     [phone, contactPhone],
     (err, results) => {
       if (err) throw err;
-      res.status(200).send(results);
+      if (results.length == 0) {
+        return res.status(200).send({ receiver: contactPhone, is_fav: 0 });
+      }
+      res.status(200).send(results[0]);
     }
   );
 });
