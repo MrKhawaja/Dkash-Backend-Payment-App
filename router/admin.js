@@ -66,6 +66,20 @@ app.get("/users", auth, (req, res) => {
   });
 });
 
+app.get("/users/counts", auth, (req, res) => {
+  if (req.decoded.type != "admin") {
+    return res.status(401).send("Unauthorized");
+  }
+
+  db.query(
+    "select count(*) as count,type from users group by type;",
+    (err, result) => {
+      if (err) throw err;
+      res.status(200).send(result);
+    }
+  );
+});
+
 app.get("/transactions", auth, (req, res) => {
   if (req.decoded.type != "admin") {
     return res.status(401).send("Unauthorized");
