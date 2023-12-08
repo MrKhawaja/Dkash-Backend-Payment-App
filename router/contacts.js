@@ -125,6 +125,7 @@ app.put("/fav/:id", auth, (req, res) => {
 app.get("/isfav/:phone", auth, (req, res) => {
   const phone = req.decoded.phone;
   const contactPhone = req.params.phone;
+
   db.query(
     "SELECT is_fav FROM contacts WHERE phone = ? AND contact_phone = ?",
     [phone, contactPhone],
