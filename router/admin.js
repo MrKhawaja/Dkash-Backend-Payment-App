@@ -76,4 +76,17 @@ app.get("/transactions", auth, (req, res) => {
   });
 });
 
+app.get("/graph", auth, (req, res) => {
+  if (req.decoded.type != "admin") {
+    return res.status(401).send("Unauthorized");
+  }
+  db.query(
+    "SELECT type,year(date) as year, month(date) as month, day(date) as day, hour(date) as hour, minute(date) as minute,count(*) as count FROM transactions GROUP BY hour( date ), minute(date), year(date), month(date), day(date) ,type;",
+    (err, result) => {
+      if (err) throw err;
+      res.status(200).send(result);
+    }
+  );
+});
+
 module.exports = app;
