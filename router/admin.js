@@ -81,9 +81,10 @@ app.get("/graph", auth, (req, res) => {
     return res.status(401).send("Unauthorized");
   }
   db.query(
-    "SELECT type,year(date) as year, month(date) as month, day(date) as day, hour(date) as hour, minute(date) as minute,count(*) as count FROM transactions GROUP BY hour( date ), minute(date), year(date), month(date), day(date) ,type;",
+    "SELECT date, minute(date) count(*) as count FROM transactions GROUP BY minute(date),date;",
     (err, result) => {
       if (err) throw err;
+
       res.status(200).send(result);
     }
   );
