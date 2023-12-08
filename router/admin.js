@@ -81,7 +81,7 @@ app.get("/graph", auth, (req, res) => {
     return res.status(401).send("Unauthorized");
   }
   db.query(
-    "SELECT date, minute(date) count(*) as count FROM transactions GROUP BY minute(date),date;",
+    "SELECT date, minute(date), count(*) as count FROM transactions GROUP BY minute(date),date;",
     (err, result) => {
       if (err) throw err;
 
