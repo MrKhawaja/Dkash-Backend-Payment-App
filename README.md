@@ -1,5 +1,5 @@
-# cse471-lab-project
+# Dkash-Backend-Payment-App
 
-Backend of lab project cse471
+Backend of Dkash-Payment-App.
 
-It is a project on money transaction called Dkash
+It is a project for money transaction called Dkash
